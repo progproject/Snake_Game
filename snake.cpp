@@ -3,10 +3,7 @@
 #include <fstream>
 #include <time.h>
 
-//#define UP          72
-//#define LEFT        75
-//#define RIGHT       77
-//#define DOWN        80
+#define KEY_ESC   27
 
 using namespace std;
 
@@ -14,10 +11,12 @@ using namespace std;
 struct snakeBody {
 
 	int snake[2][100];
+	int erase_snake[2][100];
 	int length;
 	int height;
 	int radius;
 	char dir;
+	char c;
 
 };
 
@@ -32,6 +31,7 @@ struct food {
 /*GLOBAL VARIABLE*/
 food f;
 snakeBody s;
+bool snake_erase = false;
 
 /*FUNCTION DECLARATION*/
 void menu( );
@@ -41,6 +41,23 @@ void drawFood( );
 void initSnake( );
 void drawSnake( );
 void moveSnake( );
+void eraseSnake( );
+void colDet( );
+
+void gameEngine( )
+{   
+
+	initFood( );
+	initSnake( );
+
+	//while( true )
+	{
+		drawFood( );
+		moveSnake( );
+		colDet( );
+	}
+
+}
 
 /*FUCTIONS START*/
 int main ( )
@@ -96,14 +113,14 @@ void menu( )
 	{
 	case '1':
 		{
-
-			initSnake();
+			gameEngine( );
+			/*initSnake();
 			initFood();
 
 			while(1)
 			{
-				moveSnake();
-			}
+			moveSnake();
+			}*/
 
 			break;
 		}
@@ -162,10 +179,8 @@ void menuPause( )
 	case 'c' : case 'C':
 		{
 
-			while(1)
-			{
-				moveSnake();
-			}
+			s.dir = s.c;
+			moveSnake( );
 
 			break;
 		}
@@ -222,23 +237,58 @@ void initSnake( )
 void drawSnake( )
 {
 
+	//cleardevice( );
+
+	drawFood( );
+
 	//green
 	setcolor( 2 );
 	setfillstyle(8, 10);
 
-	cleardevice( );
-
 	for(int i = s.length - 1; i >= 0 ; i--)
 	{
 		circle(s.snake[0][i], s.snake[1][i],s.radius);
-		floodfill(s.snake[0][i], s.snake[1][i],2);
+		floodfill(s.snake[0][i]+1, s.snake[1][i]+1,2);
 	}
 
-	drawFood( );
+	eraseSnake( );
+	colDet( );
 
 	delay( 300 );
 
 }//end drawSnake;
+
+void eraseSnake( )
+{
+
+	//Remove Snake
+	setcolor( BLACK );
+	setfillstyle(8, BLACK);
+	for(int i = 0; i < s.length; i++)
+	{
+		fillellipse(s.snake[0][0], s.snake[1][0],s.radius,s.radius);
+	}
+
+	if( snake_erase != false )
+	{
+
+		for(int i = 0; i < 2; i++)
+		{
+			for(int j = 0; j < s.length ; j++)
+			{
+				s.erase_snake[i][j] = s.snake[i][j]; 
+			}
+		}
+
+		for(int i = 1; i < s.length; i++)
+		{
+			fillellipse(s.erase_snake[0][i], s.erase_snake[1][i],s.radius,s.radius);
+		}
+
+		snake_erase = false;
+	}
+
+}
 
 void moveSnake( )
 {
@@ -309,10 +359,6 @@ void moveSnake( )
 			for( int i = 0; i < s.length; i++)
 			{
 				s.snake[0][i] += s.height;
-
-				circle(s.snake[0][i], s.snake[1][i],s.radius);
-
-				//delay( 300 );
 			}
 
 			drawSnake( );
@@ -324,23 +370,18 @@ void moveSnake( )
 	//will be called again
 	while( kbhit() )
 	{
+		s.c = s.dir;
 		s.dir = getch();
-			
-		if( s.dir == 'q' || s.dir == 'Q' ) {
 
-			cleardevice();
-			menu( );
-
-		}
-
-		/*if( s.dir != 'P' || s.dir != 'p' )
+		if( s.dir == KEY_ESC)
 		{
+			menuPause( );
+		} else if( s.dir == 'q' || s.dir == 'Q' ) {
+			menu( );
+		} else {
+			snake_erase = true;
 			moveSnake( );
 		}
-		else
-			menuPause( );*/
-
-		moveSnake( );
 
 	}
 
@@ -359,10 +400,35 @@ void initFood( )
 
 void drawFood( )
 {
-	
+
 	setfillstyle(4, f.color);
-	setcolor(f.color);
+	setcolor(RED);
 	circle(f.x,f.y,f.radius);
 	floodfill(f.x + 1,f.y + 1,f.color);
+
+}
+
+void colDet( )
+{
+
+	/*if( RED == getpixel(s.snake[0][s.length -1],s.snake[1][s.length -1] ) )
+	{
+	cleardevice();
+	setcolor( 4 );
+	settextjustify( 1, 2 );
+	settextstyle( 10, HORIZ_DIR, 4 );
+	outtextxy( 300, 200, "GAME OVER");
+	}*/
+
+	if(s.snake[0][s.length -1] == (f.x + f.radius) && s.snake[1][s.length -1] == (f.y + f.radius))
+	{
+
+		cleardevice( );
+		setcolor( 4 );
+		settextjustify( 1, 2 );
+		settextstyle( 10, HORIZ_DIR, 4 );
+		outtextxy( 300, 200, "GAME OVER");
+
+	}
 
 }
