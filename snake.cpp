@@ -49,6 +49,7 @@ struct obstacles
 food f;
 snakeBody s;
 bool snake_erase = false;
+bool down = false;
 
 /*FUNCTION DECLARATION*/
 void menu( );
@@ -265,8 +266,7 @@ void drawSnake( )
 
 	delay( 300 );
 
-	//eraseSnake( );
-	cleardevice( );
+	eraseSnake( );
 
 }//end drawSnake;
 
@@ -313,25 +313,6 @@ void snakeDir( )
 			{
 				s.dir = getch();
 
-				if( s.dir == KEY_UP )
-				{
-
-					s.snake[1][s.length - 1] -= s.height;
-
-				} else if( s.dir == KEY_DOWN ) {
-
-					s.snake[1][s.length - 1] += s.height;
-
-				} else if( s.dir == KEY_LEFT ) {
-
-					s.snake[0][s.length - 1] -= s.height;
-
-				} else if( s.dir == KEY_RIGHT ) {
-
-					s.snake[0][s.length - 1] += s.height;
-
-				}//endif1
-
 				snake_erase = true;
 				moveSnake( );
 				draw( );
@@ -346,7 +327,7 @@ void snakeDir( )
 
 			}
 
-		}//endif3
+		}
 
 		while(!kbhit())
 		{
@@ -406,7 +387,7 @@ void drawFood( )
 void eatFood( )
 {
 
-	if(s.snake[0][s.length -1] == (f.x + f.radius) && s.snake[1][s.length -1] == (f.y + f.radius))
+	if(s.snake[0][s.length -1] == (f.x + f.radius) || s.snake[1][s.length -1] == (f.y + f.radius))
 	{
 		s.length += 1;
 		initFood( );
