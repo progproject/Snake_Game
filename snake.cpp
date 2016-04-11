@@ -28,6 +28,23 @@ struct food {
 
 };
 
+struct boundary
+{
+	
+	int length;
+	int width;
+	int border;
+
+};
+
+struct obstacles
+{
+	int locX1;
+	int locY1;
+	int locX2;
+	int locY2;
+};
+
 /*GLOBAL VARIABLE*/
 food f;
 snakeBody s;
@@ -42,20 +59,27 @@ void initSnake( );
 void drawSnake( );
 void moveSnake( );
 void eraseSnake( );
+void snakeDir( );
 void colDet( );
+void drawBoundary( );
+void drawObstacles( );
+void eatFood( );
+
+void draw ( )
+{
+	drawBoundary( );
+	drawObstacles( );
+	drawFood( );
+	drawSnake( );
+	eatFood( );
+}
 
 void gameEngine( )
 {   
 
 	initFood( );
 	initSnake( );
-
-	//while( true )
-	{
-		drawFood( );
-		moveSnake( );
-		colDet( );
-	}
+	draw( );
 
 }
 
@@ -113,14 +137,16 @@ void menu( )
 	{
 	case '1':
 		{
-			gameEngine( );
-			/*initSnake();
-			initFood();
 
-			while(1)
+			initSnake( );
+			initFood( );
+			drawBoundary( );
+			drawObstacles( );
+
+			while( true )
 			{
-			moveSnake();
-			}*/
+				snakeDir( );
+			}
 
 			break;
 		}
@@ -201,9 +227,10 @@ void menuPause( )
 void initSnake( )
 {
 
-	s.length = 10; //initial length of snake
+	s.length = 5; //initial length of snake
 	s.height  = 10;  //initial thickness of snake
 	s.radius = 5;
+	s.dir = '\0';
 
 	for(int i = 0; i  < 2; i++)
 	{
@@ -221,25 +248,10 @@ void initSnake( )
 		}
 	}
 
-	for(int i = 0; i  < 2; i++)
-	{
-		for(int j = 0; j < s.length; j++ )
-		{
-
-			cout << s.snake[i][j] << " ";
-
-		}
-		cout << endl;
-	}
-
 }//end initSnake
 
 void drawSnake( )
 {
-
-	//cleardevice( );
-
-	drawFood( );
 
 	//green
 	setcolor( 2 );
@@ -251,10 +263,10 @@ void drawSnake( )
 		floodfill(s.snake[0][i]+1, s.snake[1][i]+1,2);
 	}
 
-	eraseSnake( );
-	colDet( );
-
 	delay( 300 );
+
+	//eraseSnake( );
+	cleardevice( );
 
 }//end drawSnake;
 
@@ -264,10 +276,6 @@ void eraseSnake( )
 	//Remove Snake
 	setcolor( BLACK );
 	setfillstyle(8, BLACK);
-	for(int i = 0; i < s.length; i++)
-	{
-		fillellipse(s.snake[0][0], s.snake[1][0],s.radius,s.radius);
-	}
 
 	if( snake_erase != false )
 	{
@@ -280,7 +288,7 @@ void eraseSnake( )
 			}
 		}
 
-		for(int i = 1; i < s.length; i++)
+		for(int i = 0; i < s.length; i++)
 		{
 			fillellipse(s.erase_snake[0][i], s.erase_snake[1][i],s.radius,s.radius);
 		}
@@ -288,104 +296,91 @@ void eraseSnake( )
 		snake_erase = false;
 	}
 
-}
+	for(int i = 0; i < s.length; i++)
+	{
+		fillellipse(s.snake[0][0], s.snake[1][0],s.radius,s.radius);
+	}
+
+}//end eraseSnake
+
+void snakeDir( )
+{
+		if ( kbhit( ) )
+		{
+			s.dir = getch(); 
+
+			if(s.dir == '\0')
+			{
+				s.dir = getch();
+
+				if( s.dir == KEY_UP )
+				{
+
+					s.snake[1][s.length - 1] -= s.height;
+
+				} else if( s.dir == KEY_DOWN ) {
+
+					s.snake[1][s.length - 1] += s.height;
+
+				} else if( s.dir == KEY_LEFT ) {
+
+					s.snake[0][s.length - 1] -= s.height;
+
+				} else if( s.dir == KEY_RIGHT ) {
+
+					s.snake[0][s.length - 1] += s.height;
+
+				}//endif1
+
+				snake_erase = true;
+				moveSnake( );
+				draw( );
+
+			} else if ( s.dir == 'p' || s.dir == 'P' ) {
+
+				menuPause( );
+			
+			} else if (  s.dir == 'q' || s.dir == 'Q' ) {
+
+				menu( );
+
+			}
+
+		}//endif3
+
+		while(!kbhit())
+		{
+
+			moveSnake( );
+		    draw( );
+
+		}
+
+}//end snakeDir
 
 void moveSnake( )
 {
 
-	//default direction
-	while( !kbhit() )
+	for(int i = 0; i < 2; i++)
 	{
-
-		if(s.dir == KEY_UP)
+		for( int j = 0; j < s.length - 1; j++ )
 		{
-
-			s.snake[1][s.length - 1] -= s.height;
-
-			drawSnake( );
-
-			//All values on x-axis should be equal to head
-			//and shifting values from head to tail on y-axis
-			for( int i = 0; i < s.length - 1; i++)
-			{
-				s.snake[0][i] = s.snake[0][s.length - 1];
-				s.snake[1][i] = s.snake[1][i + 1];
-			}
-
-		} else if(s.dir == KEY_DOWN) {
-
-			s.snake[1][s.length - 1] += s.height;
-
-			drawSnake( );
-
-			//All values on x-axis should be equal to head
-			//and shifting values from head to tail on y-axis
-			for( int i = 0; i < s.length - 1; i++)
-			{
-				s.snake[0][i] = s.snake[0][s.length - 1];
-				s.snake[1][i] = s.snake[1][i + 1];
-			}
-
-		} else if(s.dir == KEY_LEFT) {
-
-			s.snake[0][s.length - 1] -= s.height;
-
-			drawSnake( );
-
-			//All values on y-axis should be equal to head
-			//and shifting values from head to tail on x-axis
-			for( int i = 0; i < s.length - 1; i++)
-			{
-				s.snake[1][i] = s.snake[1][s.length - 1];
-				s.snake[0][i] = s.snake[0][i+1];
-			}
-
-		} else if(s.dir == KEY_RIGHT) {
-
-			s.snake[0][s.length - 1] += s.height;
-
-			drawSnake( );
-
-			//All values on y-axis should be equal to head
-			//and shifting values from head to tail on x-axis
-			for( int i = 0; i < s.length - 1; i++)
-			{
-				s.snake[1][i] = s.snake[1][s.length - 1];
-				s.snake[0][i] = s.snake[0][i+1];
-			}
-
-		} else {
-
-			for( int i = 0; i < s.length; i++)
-			{
-				s.snake[0][i] += s.height;
-			}
-
-			drawSnake( );
-
+			s.snake[i][j] = s.snake[i][j+1];
 		}
 	}
 
-	//Ater getting direction function
-	//will be called again
-	while( kbhit() )
-	{
-		s.c = s.dir;
-		s.dir = getch();
+	if( s.dir == KEY_UP )
+		s.snake[1][s.length - 1] -= s.height;
+	else if( s.dir == KEY_DOWN )
+		s.snake[1][s.length - 1] += s.height;
+	else if( s.dir == KEY_LEFT )
+		s.snake[0][s.length - 1] -= s.height;
+	else if( s.dir == KEY_RIGHT )
+		s.snake[0][s.length - 1] += s.height;
+	else if ( s.dir == '\0' )
+		s.snake[0][s.length - 1] += s.height;
 
-		if( s.dir == KEY_ESC)
-		{
-			menuPause( );
-		} else if( s.dir == 'q' || s.dir == 'Q' ) {
-			menu( );
-		} else {
-			snake_erase = true;
-			moveSnake( );
-		}
-
-	}
-
-}//end snakeDir
+}
 
 void initFood( )
 {
@@ -393,7 +388,7 @@ void initFood( )
 	srand(time (NULL) );
 	f.x = rand()%500+20;
 	f.y = rand()%500+20;
-	f.radius = 5;
+	f.radius = 8;
 	f.color = 4;
 
 }
@@ -408,27 +403,42 @@ void drawFood( )
 
 }
 
-void colDet( )
+void eatFood( )
 {
-
-	/*if( RED == getpixel(s.snake[0][s.length -1],s.snake[1][s.length -1] ) )
-	{
-	cleardevice();
-	setcolor( 4 );
-	settextjustify( 1, 2 );
-	settextstyle( 10, HORIZ_DIR, 4 );
-	outtextxy( 300, 200, "GAME OVER");
-	}*/
 
 	if(s.snake[0][s.length -1] == (f.x + f.radius) && s.snake[1][s.length -1] == (f.y + f.radius))
 	{
-
-		cleardevice( );
-		setcolor( 4 );
-		settextjustify( 1, 2 );
-		settextstyle( 10, HORIZ_DIR, 4 );
-		outtextxy( 300, 200, "GAME OVER");
-
+		s.length += 1;
+		initFood( );
 	}
 
 }
+
+void drawBoundary ( )
+{
+
+	boundary b;
+	b.length = 600;
+	b.width = 600;
+	b.border = 20;
+
+	setcolor(YELLOW);
+	setfillstyle(7,YELLOW);
+
+	bar(b.length-b.width,b.length-b.width,b.border,b.length);//left
+	bar(b.length-b.width,b.length-b.width,b.length,b.border);//top
+	bar(b.length-b.border,b.length-b.width,b.length,b.width);//right
+	bar(b.length-b.width,b.length-b.border,b.length,b.width);//bottom
+
+} //end boundary
+
+void drawObstacles ( )
+
+{
+	obstacles o;
+	
+	setfillstyle(5,RED);
+	bar(200,100,220,300);//1st Obstacle
+	bar(300,400,500,420);//2nd Obstacle
+
+}//endobstacles
