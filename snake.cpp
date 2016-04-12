@@ -1,5 +1,6 @@
 #include "graphics.h"
 #include <iostream>
+#include <stdio.h>
 #include <fstream>
 #include <time.h>
 
@@ -28,8 +29,7 @@ struct food {
 
 };
 
-struct boundary
-{
+struct boundary {
 	
 	int length;
 	int width;
@@ -37,33 +37,46 @@ struct boundary
 
 };
 
-struct obstacles
-{
-	int locX1;
-	int locY1;
-	int locX2;
-	int locY2;
+struct player {
+
+	char name[10];
+	int score;
+	int highscrore;
+ 
 };
 
 /*GLOBAL VARIABLE*/
 food f;
 snakeBody s;
+boundary b;
+player p;
 bool snake_erase = false;
 
 /*FUNCTION DECLARATION*/
 void menu( );
 void menuPause( );
-void initFood( );
-void drawFood( );
-void initSnake( );
-void drawSnake( );
-void moveSnake( );
-void eraseSnake( );
-void snakeDir( );
-void colDet( );
-void drawBoundary( );
-void drawObstacles( );
-void eatFood( );
+
+/*BOARD*/
+void drawBoundary( );    //draw boundry on board 
+void drawObstacles( );   //draw obstacle on board
+
+/*FOOD*/
+void initFood( );        //food random positions
+void drawFood( );        //draw food on board
+void eatFood( );         //perform action when snake eat food
+
+/*SNAKE*/
+void initSnake( );       //initialize snakebody
+void drawSnake( );       //draw snakebody on board
+void moveSnake( );       //change values of snake head and tail according to direction
+void eraseSnake( );      //to erase snake to avoid screen blink issue
+void snakeDir( );        //take direction from user
+
+/*Utilities*/
+void colDet( );          //detect collision when hit with boundry or obstacle
+void getPlayer( );       //get user name from player
+void saveGame( );        //save game in pause menu;
+void loadGame( );        //Load previous game
 
 void draw ( )
 {
@@ -77,9 +90,16 @@ void draw ( )
 void gameEngine( )
 {   
 
-	initFood( );
+	getPlayer( );
 	initSnake( );
-	draw( );
+	initFood( );
+	drawBoundary( );
+	drawObstacles( );
+
+	while( true )
+	{
+		snakeDir( );
+	}
 
 }
 
@@ -89,7 +109,7 @@ int main ( )
 
 	s.dir = '\0';
 
-	initwindow(600, 600, "Snake Game");
+	initwindow(800, 600, "Snake Game");
 
 	menu( );
 
@@ -112,21 +132,20 @@ void menu( )
 
 	//border
 	setcolor( 8 );
-	rectangle(5,5,595,595);
+	rectangle(5,5,795,595);
 
 	//heading
 	setcolor( 3 );
 	settextjustify( 1, 2 );
 	settextstyle( 10, HORIZ_DIR, 4 );
-	outtextxy( 300, 20, "Welcome To Snake Game" );
+	outtextxy( 400, 20, "Welcome To Snake Game" );
 	//Menu
 	setcolor( 2 );
 	settextjustify( 1, 1 );
 	settextstyle( 4, HORIZ_DIR, 1 );
-	outtextxy( 295, 250, "Press 1 to Play Game" );
-	outtextxy( 300, 280, "Press 2 for High Score" );
-	outtextxy( 280, 310, "Press 3 for Settings" );
-	outtextxy( 280, 360, "Press E to Exit" );
+	outtextxy( 395, 250, "Press 1 to Play Game" );
+	outtextxy( 400, 280, "Press 2 for High Score" );
+	outtextxy( 380, 360, "Press E to Exit" );
 
 
 	choice = getch();
@@ -138,27 +157,59 @@ void menu( )
 	case '1':
 		{
 
-			initSnake( );
-			initFood( );
-			drawBoundary( );
-			drawObstacles( );
+			cleardevice( );
+			
+			//heading
+			setcolor( 1 );
+			settextjustify( 1, 2 );
+			settextstyle( 10, HORIZ_DIR, 4 );
+			outtextxy( 400, 20, "Welcome To Snake Game" );
+			//Menu
+			setcolor( 1 );
+			settextjustify( 1, 1 );
+			settextstyle( 4, HORIZ_DIR, 1 );
+			outtextxy( 395, 250, "Press 1 to Start New Game" );
+			outtextxy( 400, 280, "Press 2 to Load Game" );
 
-			while( true )
+			char newchoice = '\0';
+			newchoice = getch( );
+
+			switch(newchoice)
 			{
-				snakeDir( );
+			case '1':
+				{
+
+					gameEngine( );
+
+				}
+			case '2':
+				{
+
+					drawBoundary( );
+					drawObstacles( );
+					loadGame( );
+					snake_erase = false;
+
+					while( true )
+					{
+						snakeDir( );
+					}
+
+				}
+			default:
+				{
+					menu( );
+				}
+
 			}
 
 			break;
+
 		}
 	case '2':
 		{
 			//getHighScores();
 
-			break;
-		}
-	case '3':
-		{
-			//settings();
 			break;
 		}
 	case 'e' : case 'E':
@@ -182,18 +233,19 @@ void menuPause( )
 	setcolor( 3 );
 	settextjustify( 1, 2 );
 	settextstyle( 10, HORIZ_DIR, 4 );
-	outtextxy( 300, 20, "Snake Game" );
+	outtextxy( 400, 20, "Snake Game" );
 	//Pause
 	setcolor( 4 );
 	settextjustify( 1, 2 );
 	settextstyle( 10, HORIZ_DIR, 4 );
-	outtextxy( 300, 200, "GAME PAUSE" );
+	outtextxy( 400, 200, "GAME PAUSE" );
 	//Menu
 	setcolor( 6 );
 	settextjustify( 1, 1 );
 	settextstyle( 4, HORIZ_DIR, 1 );
-	outtextxy( 295, 255, "Press C to Continue" );
-	outtextxy( 290, 290, "Press E for Main menu" );
+	outtextxy( 395, 265, "Press C to Continue" );
+	outtextxy( 390, 310, "Press S to Save Game" );
+	outtextxy( 390, 360, "Press E for Main menu" );
 
 	char choice = '\0';
 	choice = getch();
@@ -212,8 +264,14 @@ void menuPause( )
 		}
 	case 'e': case 'E':
 		{
-			menu();
+			menu( );
 
+			break;
+		}
+	case 's': case 'S':
+		{
+			saveGame( );
+			
 			break;
 		}
 	default:
@@ -252,6 +310,15 @@ void initSnake( )
 
 void drawSnake( )
 {
+
+	for(int i = 0; i < 2; i++)
+	{
+		for( int j = 0; j < s.length - 1; j++ )
+		{
+			cout << s.snake[i][j] << " ";
+		}
+		cout << endl;
+	}
 
 	//green
 	setcolor( 2 );
@@ -306,6 +373,9 @@ void snakeDir( )
 {
 		if ( kbhit( ) )
 		{
+			
+			s.c = s.dir; //save value to use after continue
+
 			s.dir = getch(); 
 
 			if(s.dir == '\0')
@@ -341,6 +411,7 @@ void snakeDir( )
 void moveSnake( )
 {
 
+
 	for(int i = 0; i < 2; i++)
 	{
 		for( int j = 0; j < s.length - 1; j++ )
@@ -360,7 +431,9 @@ void moveSnake( )
 	else if ( s.dir == '\0' )
 		s.snake[0][s.length - 1] += s.height;
 
-}
+	colDet( );
+
+}//end moveSnake
 
 void initFood( )
 {
@@ -377,7 +450,7 @@ void initFood( )
 	cout << "fx " << f.x + f.radius <<endl;
 	cout << "fy " << f.y + f.radius <<endl;
 
-}
+}//end initFood
 
 void drawFood( )
 {
@@ -387,15 +460,15 @@ void drawFood( )
 	circle(f.x,f.y,f.radius);
 	floodfill(f.x + 1,f.y + 1,f.color);
 
-}
+}//end drawFood
 
 void eatFood( )
 {
 
-	 if(s.snake[0][s.length - 1] == (f.x + f.radius) && s.snake[1][s.length -1] == (f.y + f.radius))
+	if(s.snake[0][s.length - 1] == f.x && s.snake[1][s.length -1] == f.y )
 	{
 		s.length++;
-
+		p.score++;
 
 		s.snake[0][s.length-1] = s.snake[0][s.length-2];
 		s.snake[1][s.length-1] = s.snake[0][s.length-2];
@@ -410,12 +483,13 @@ void eatFood( )
 		moveSnake( );
 	}
 
-}
+}//end eatFood
 
 void drawBoundary ( )
 {
 
-	boundary b;
+	char buffer[100] = {'\0'};
+
 	b.length = 600;
 	b.width = 600;
 	b.border = 20;
@@ -428,15 +502,209 @@ void drawBoundary ( )
 	bar(b.length-b.border,b.length-b.width,b.length,b.width);//right
 	bar(b.length-b.width,b.length-b.border,b.length,b.width);//bottom
 
+	setcolor(YELLOW);
+	setfillstyle(7,RED);
+	bar(600,0,610,600);
+	bar(600,0,800,10);
+	bar(800,0,790,800);
+	bar(600,590,800,600);
+
+	setcolor( 13 );
+	settextjustify( 1, 2 );
+	settextstyle( 8, HORIZ_DIR, 3 );
+	outtextxy(700,20,"SNAKE GAME");
+	
+	setcolor( 3 );
+	settextjustify( 1, 2 );
+	settextstyle( 8, HORIZ_DIR, 2 );
+	outtextxy(700,250,p.name);
+	settextstyle( 8, HORIZ_DIR, 1 );
+	outtextxy(650,300,"Score :");
+	outtextxy(700,301,itoa(p.score,buffer,10));
+
+	setcolor( 13 );
+	settextjustify( 1, 2 );
+	settextstyle( 8, HORIZ_DIR, 1 );
+	outtextxy(700,450,"P to pause");
+	outtextxy(700,480,"Q to quite");
+
 } //end boundary
 
 void drawObstacles ( )
 
 {
-	obstacles o;
 	
 	setfillstyle(5,RED);
 	bar(200,100,220,300);//1st Obstacle
 	bar(300,400,500,420);//2nd Obstacle
 
 }//endobstacles
+
+void colDet( )
+{
+	//BoundryCollision
+	if(s.snake[0][s.length - 1] == (b.border) || s.snake[1][s.length - 1] == (b.border) || s.snake[0][s.length - 1] == (b.width - b.border) || s.snake[1][s.length - 1] == (b.length - b.border))
+	{
+		
+		delay( 300 );
+		cleardevice( );
+		
+		setcolor( 4 );
+		settextjustify( 1, 2 );
+		settextstyle( 10, HORIZ_DIR, 5 );
+		outtextxy( 300, 200, "GAME OVER" );
+
+		delay( 500 );
+
+		menu( );
+
+	} 
+	//Obstacle 1 Collision
+	else if(s.snake[0][s.length - 1] >= 200 && s.snake[0][s.length - 1] <= 220 && s.snake[1][s.length - 1] >= 100 && s.snake[1][s.length - 1] <= 300 )
+	{
+
+		delay( 300 );
+		cleardevice( );
+		
+		setcolor( 4 );
+		settextjustify( 1, 2 );
+		settextstyle( 10, HORIZ_DIR, 5 );
+		outtextxy( 300, 200, "GAME OVER" );
+
+		delay( 500 );
+
+		menu( );
+
+	}
+	//Obstacle 2 Collision
+	else if ( s.snake[0][s.length - 1] >= 300 && s.snake[0][s.length - 1] <= 500 && s.snake[1][s.length - 1] >= 400 && s.snake[1][s.length - 1] <= 420 ) 
+	{
+
+		delay( 300 );
+		cleardevice( );
+		
+		setcolor( 4 );
+		settextjustify( 1, 2 );
+		settextstyle( 10, HORIZ_DIR, 5 );
+		outtextxy( 300, 200, "GAME OVER" );
+
+		delay( 500 );
+
+		menu( );
+
+	}
+
+}//end colDet
+
+void getPlayer( )
+{
+	
+	cleardevice( );
+	p.score = 0;
+	memset(p.name,'\0',10);
+
+	char ch = '\0';
+
+	settextjustify( 1, 2 );
+	settextstyle( 10, HORIZ_DIR, 2 );
+	outtextxy( 400, 250, "Please Enter Your Username" );
+
+	rectangle(270,300,500,350);
+
+	for( int i = 0; i < 6; i++)
+	{
+
+		ch = getch();
+		p.name[i] = toupper(ch);
+	
+	}
+
+	settextjustify( 1, 2 );
+	settextstyle( 10, HORIZ_DIR, 2 );
+	outtextxy(380,315,p.name);
+
+	delay( 300 );
+
+	cleardevice( );
+
+}//end getPlayer
+
+void saveGame( )
+{
+
+	FILE * fp = fopen("Savegame.txt","w");
+
+	fprintf(fp,"%s\n",p.name);
+	fprintf(fp,"%d\n",p.score);
+	fprintf(fp,"%d",f.x);
+	fprintf(fp," %d\n",f.y);
+	fprintf(fp,"%d\n",f.radius);
+	fprintf(fp,"%d\n",s.length);
+	fprintf(fp,"%d\n",s.height);
+	fprintf(fp,"%d\n",s.radius);
+	fprintf(fp,"%c\n",s.dir);
+	fprintf(fp,"%c\n",s.c);
+	
+	for(int i = 0; i < 2; i++)
+	{
+		for( int j = 0; j < s.length; j++ )
+		{
+			fprintf(fp,"%d ",s.snake[i][j]);
+		}
+		fprintf(fp,"\n");
+	}
+
+	for(int i = 0; i < 2; i++)
+	{
+		for( int j = 0; j < s.length; j++ )
+		{
+			fprintf(fp,"%d ",s.erase_snake[i][j]);
+		}
+		fprintf(fp,"\n");
+	}
+
+	fclose(fp);
+
+	menuPause( );
+
+}//end saveGame
+
+void loadGame( ) 
+{
+
+	FILE * lp = fopen("Savegame.txt","r");
+
+	fscanf(lp,"%s",p.name);
+	fscanf(lp,"%d",&p.score);
+	fscanf(lp,"%d",&f.x);
+	fscanf(lp," %d\n",&f.y);
+	fscanf(lp,"%d\n",&f.radius);
+	fscanf(lp,"%d\n",&s.length);
+	fscanf(lp,"%d\n",&s.height);
+	fscanf(lp,"%d\n",&s.radius);
+	fscanf(lp,"%c\n",&s.dir);
+	fscanf(lp,"%c\n",&s.c);
+	
+	for(int i = 0; i < 2; i++)
+	{
+		for( int j = 0; j < s.length; j++ )
+		{
+			fscanf(lp,"%d ",&s.snake[i][j]);
+		}
+		fscanf(lp,"\n");
+	}
+
+	for(int i = 0; i < 2; i++)
+	{
+		for( int j = 0; j < s.length; j++ )
+		{
+			fscanf(lp,"%d ",&s.erase_snake[i][j]);
+		}
+		fscanf(lp,"\n");
+	}
+
+	fclose(lp);
+
+	cleardevice();
+
+}//end loadGame
