@@ -4,8 +4,6 @@
 #include <fstream>
 #include <time.h>
 
-#define KEY_ESC   27
-
 using namespace std;
 
 /*STRUCTURES*/
@@ -64,6 +62,7 @@ void drawObstacles( );   //draw obstacle on board
 void initFood( );        //food random positions
 void drawFood( );        //draw food on board
 void eatFood( );         //perform action when snake eat food
+void foodPosition( );    //correct food position
 
 /*SNAKE*/
 void initSnake( );       //initialize snakebody
@@ -71,6 +70,7 @@ void drawSnake( );       //draw snakebody on board
 void moveSnake( );       //change values of snake head and tail according to direction
 void eraseSnake( );      //to erase snake to avoid screen blink issue
 void snakeDir( );        //take direction from user
+void snakecol( );        //check snake colision with itself
 
 /*Utilities*/
 void colDet( );          //detect collision when hit with boundry or obstacle
@@ -334,6 +334,7 @@ void drawSnake( )
 
 	eraseSnake( );
 
+	eatFood( );
 }//end drawSnake;
 
 void eraseSnake( )
@@ -431,7 +432,9 @@ void moveSnake( )
 	else if ( s.dir == '\0' )
 		s.snake[0][s.length - 1] += s.height;
 
+	//checkcolisions
 	colDet( );
+	//snakecol( );
 
 }//end moveSnake
 
@@ -443,6 +446,9 @@ void initFood( )
 	f.y = rand()%500+20;
 	f.radius = 8;
 	f.color = 4;
+
+	//checkfood
+	foodPosition( );
 
 	cout << "fx " << f.x <<endl;
 	cout << "fy " << f.y <<endl;
@@ -462,10 +468,32 @@ void drawFood( )
 
 }//end drawFood
 
+void foodPosition( )
+{
+
+	//Boundry
+	if(f.x + f.radius == (b.border) || f.y + f.radius == (b.border) || f.x + f.radius == (b.width - b.border) || f.y + f.radius == (b.length - b.border))
+	{
+		initSnake( );
+	} 
+	//Obstacle 1 
+	else if(f.x + f.radius >= 200 && f.x + f.radius <= 220 && f.y + f.radius >= 100 && f.y + f.radius <= 300 )
+	{
+		initSnake( );
+	}
+	//Obstacle
+	else if ( f.x + f.radius >= 300 && f.x  + f.radius <= 500 && f.y + f.radius >= 400 && f.y + f.radius <= 420 ) 
+	{
+		initSnake( );
+	} else
+		drawSnake( );
+
+}//end foodPosition
+
 void eatFood( )
 {
 
-	if(s.snake[0][s.length - 1] == f.x && s.snake[1][s.length -1] == f.y )
+	if(s.snake[0][s.length - 1] == f.x + f.radius && s.snake[1][s.length -1] == f.y + f.radius )
 	{
 		s.length++;
 		p.score++;
@@ -552,7 +580,7 @@ void colDet( )
 		setcolor( 4 );
 		settextjustify( 1, 2 );
 		settextstyle( 10, HORIZ_DIR, 5 );
-		outtextxy( 300, 200, "GAME OVER" );
+		outtextxy( 400, 300, "GAME OVER" );
 
 		delay( 500 );
 
@@ -569,7 +597,7 @@ void colDet( )
 		setcolor( 4 );
 		settextjustify( 1, 2 );
 		settextstyle( 10, HORIZ_DIR, 5 );
-		outtextxy( 300, 200, "GAME OVER" );
+		outtextxy( 400, 300, "GAME OVER" );
 
 		delay( 500 );
 
@@ -586,7 +614,7 @@ void colDet( )
 		setcolor( 4 );
 		settextjustify( 1, 2 );
 		settextstyle( 10, HORIZ_DIR, 5 );
-		outtextxy( 300, 200, "GAME OVER" );
+		outtextxy( 400, 300, "GAME OVER" );
 
 		delay( 500 );
 
@@ -595,6 +623,27 @@ void colDet( )
 	}
 
 }//end colDet
+
+void snakecol( )
+{
+	for(int i = 0; i < s.length - 1; i++ )
+	{
+		if( s.snake[0][s.length - 1] == s.snake[0][i] && s.snake[1][s.length - 1] == s.snake[0][i] )
+		{
+			delay( 300 );
+			cleardevice( );
+
+			setcolor( 4 );
+			settextjustify( 1, 2 );
+			settextstyle( 10, HORIZ_DIR, 5 );
+			outtextxy( 400, 300, "GAME OVER" );
+
+			delay( 500 );
+
+			menu( );
+		}
+	}
+}
 
 void getPlayer( )
 {
